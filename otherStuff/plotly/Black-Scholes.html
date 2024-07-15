@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Black-Scholes Model 3D Plot</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+<div id="plot"></div>
+
+<script>
+// Function to calculate the cumulative normal distribution
+function cumulativeNormalDistribution(x) {
+    var mean = 0.0;
+    var stdDev = 1.0;
+    var t = 1.0 / (1.0 + 0.2316419 * Math.abs(x));
+    var d = 0.3989423 * Math.exp(-x * x / 2.0);
+    var probability = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+    if (x > 0) {
+        probability = 1 - probability;
+    }
+    return 1 - probability;
+}
+
+// Function to calculate the Black-Scholes call option price
+function blackScholes(S0, K, T, t, r, sigma) {
+    var d1 = (Math.log(S0 / K) + (r + sigma * sigma / 2) * (T - t)) / (sigma * Math.sqrt(T - t));
+    var d2 = d1 - sigma * Math.sqrt(T - t);
+    var callPrice = S0 * cumulativeNormalDistribution(d1) - K * Math.exp(-r * (T - t)) * cumulativeNormalDistribution(d2);
+    return callPrice;
+}
+
+// Parameters
+var S0 = 100; // Current stock price
+var T = 1; // Time to maturity in years
+var r = 0.05; // Risk-free interest rate
+var sigma = 0.2; // Volatility
+
+// Create data arrays
+var K_values = [];
+var t_values = [];
+var optionPrices = [];
+
+for (var K = 50; K <= 150; K += 5) {
+    var K_row = [];
+    var t_row = [];
+    var price_row = [];
+    for (var t = 0; t <= T; t += 0.1) {
+        K_row.push(K);
+        t_row.push(t);
+        price_row.push(blackScholes(S0, K, T, t, r, sigma));
+    }
+    K_values.push(K_row);
+    t_values.push(t_row);
+    optionPrices.push(price_row);
+}
+
+// Plot the data
+var data = [{
+    x: K_values,
+    y: t_values,
+    z: optionPrices,
+    type: 'surface'
+}];
+
+var layout = {
+    title: 'Black-Scholes Call Option Price',
+    scene: {
+        xaxis: {title: 'Strike Price (K)'},
+        yaxis: {title: 'Time (t)'},
+        zaxis: {title: 'Option Price'}
+    }
+};
+
+Plotly.newPlot('plot', data, layout);
+</script>
+
+</body>
+</html>
